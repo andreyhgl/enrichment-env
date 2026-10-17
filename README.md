@@ -1,4 +1,4 @@
-[![Build and Release Docker Container](https://github.com/andreyhgl/enrichment/actions/workflows/build-release.yml/badge.svg)](https://github.com/andreyhgl/enrichment/actions/workflows/build-release.yml)
+[![Build and Release Docker Container](https://github.com/andreyhgl/enrichment-env/actions/workflows/build-release.yml/badge.svg)](https://github.com/andreyhgl/enrichment-env/actions/workflows/build-release.yml)
 
 A **bioconductor/bioconductor_docker:RELEASE_3_19** container with [clusterProfiler](https://bioconductor.org/packages/clusterProfiler/) and [ReactomePA](https://bioconductor.org/packages/ReactomePA/) R-packages (and some dependencies). Used for functional enrichment analysis, both over-representation analysis (ORA) and gene set enrichment analysis (GSEA), with GO, KEGG, Reactome and MSigDB gene sets.
 
@@ -27,22 +27,22 @@ A **bioconductor/bioconductor_docker:RELEASE_3_19** container with [clusterProfi
 
 ```sh
 # docker
-docker pull ghcr.io/andreyhgl/enrichment:main
+docker pull ghcr.io/andreyhgl/enrichment-env:main
 
 # apptainer / singularity
-apptainer pull docker://ghcr.io/andreyhgl/enrichment:main
-singularity pull docker://ghcr.io/andreyhgl/enrichment:main
+apptainer pull docker://ghcr.io/andreyhgl/enrichment-env:main
+singularity pull docker://ghcr.io/andreyhgl/enrichment-env:main
 ```
 
 ## Run interactively
 
 ```sh
 # docker
-docker run -it --rm -v $(pwd):/data ghcr.io/andreyhgl/enrichment:main
+docker run -it --rm -v $(pwd):/data ghcr.io/andreyhgl/enrichment-env:main
 
 # apptainer / singularity
-apptainer shell docker://ghcr.io/andreyhgl/enrichment:main
-singularity shell docker://ghcr.io/andreyhgl/enrichment:main
+apptainer shell docker://ghcr.io/andreyhgl/enrichment-env:main
+singularity shell docker://ghcr.io/andreyhgl/enrichment-env:main
 ```
 
 ## Include inside a nextflow process
@@ -50,8 +50,8 @@ singularity shell docker://ghcr.io/andreyhgl/enrichment:main
 ```groovy
 process PROCESS {
   container "${workflow.containerEngine == 'singularity' ?
-    'docker://ghcr.io/andreyhgl/enrichment:main' :
-    'ghcr.io/andreyhgl/enrichment:main'}"
+    'docker://ghcr.io/andreyhgl/enrichment-env:main' :
+    'ghcr.io/andreyhgl/enrichment-env:main'}"
 }
 ```
 
@@ -60,9 +60,9 @@ The container definition uses an [elvis operator](https://www.nextflow.io/docs/l
 ## Build locally
 
 ```sh
-git clone https://github.com/andreyhgl/enrichment.git
-cd enrichment
-docker build -t enrichment .
+git clone https://github.com/andreyhgl/enrichment-env.git
+cd enrichment-env
+docker build -t enrichment-env .
 ```
 
 ---
