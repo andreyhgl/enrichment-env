@@ -1,0 +1,100 @@
+name: Build & Release Docker container
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - .github/workflows/build-release.yml
+      - install.R
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      # Build and load into local Docker daemon for testing
+      - name: Build image locally
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: local-test:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Test before pushing
+      - name: Test package loading
+        run: |
+          docker run --rm local-test:latest Rscript -e "
+            suppressPackageStartupMessages({
+              library(AnnotationDbi)
+              library(clusterProfiler)
+              library(ReactomePA)
+              library(openxlsx)
+              library(org.Mm.eg.db)
+              library(org.Hs.eg.db)
+              library(fgsea)
+              library(enrichplot)
+              library(msigdbr)
+            })
+            
+            # Test annotation databases can query
+            hs <- mapIds(org.Hs.eg.db, 'TP53', 'ENTREZID', 'SYMBOL')
+            mm <- mapIds(org.Mm.eg.db, 'Trp53', 'ENTREZID', 'SYMBOL')
+            stopifnot(hs == '7157', mm == '22059')
+            cat('All packages loaded successfully\n')
+            cat('R version:', R.version.string, '\n')
+            cat(
+              'clusterProfiler version:',
+              as.character(packageVersion('clusterProfiler')),
+              '\n'
+            )
+          "
+
+      # Only push if test passed
+      - name: Build and push
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
